@@ -1,30 +1,9 @@
-# Создайте программу для управления клиентами на python.
-#
-# Требуется хранить персональную информацию о клиентах:
-#
-#     имя
-#     фамилия
-#     email
-#     телефон
-#
-# Сложность в том, что телефон у клиента может быть не один, а два, три и даже больше. А может и вообще не быть телефона (например, он не захотел его оставлять).
-#
-# Вам необходимо разработать структуру БД для хранения информации и несколько функций на python для управления данными:
-#
-#     Функция, создающая структуру БД (таблицы)
-#     Функция, позволяющая добавить нового клиента
-#     Функция, позволяющая добавить телефон для существующего клиента
-#     Функция, позволяющая изменить данные о клиенте
-#     Функция, позволяющая удалить телефон для существующего клиента
-#     Функция, позволяющая удалить существующего клиента
-#     Функция, позволяющая найти клиента по его данным (имени, фамилии, email-у или телефону)
-
 import psycopg2
 import configparser
 
 config = configparser.ConfigParser()
 config.read('settings.ini')
-user,password = config['DB']['login'], config['DB']['password']
+user, password = config['DB']['login'], config['DB']['password']
 
 
 def create_table():
@@ -85,20 +64,12 @@ def add_phone(name, surname, email, phone_number):
         conn.close()
         print('Соединение с базой закрыто(добавление телефона)')
 
-def update():
-    dict_of_data = {'имя': 'name', 'фамилия': 'surname', 'e-mail': 'email'}
-    while True:
-        changed_data = input('Введите какие данные вы хотите изменить среди вариантов: имя, фамилия, e-mail, телефон:\n')
-        if changed_data.lower() not in dict_of_data:
-            print('Выберите среди списка: имя, фамилия, e-mail!')
-        else:
-            print('Ваш выбор изменения:', changed_data.lower())
-            changed_value = dict_of_data[changed_data.lower()]
-            break
-    db_data: list = input('Введите через запятую Фамилию, Имя, e-mail клиента, данные которого хотите изменить: \n').strip().split()
-    name, surname, email = [*db_data]
-    print(db_data)
-    data_to_change = input('Введите новые данные')
+def update(name, surname, email, changed_value, data_to_change):
+
+    if changed_value not in ('name', 'surname', 'email'):
+        print("Измененный параметр может быть только: 'name', 'surname' или 'email'! ")
+        return
+
     try:
         conn = psycopg2.connect(database='clients', user=user, password=password)
         print('Соединение с базой открыто(изменение данных)')
@@ -107,7 +78,6 @@ def update():
             cur.execute(get_id)
             id = cur.fetchone()
             if id:
-                print(changed_value, data_to_change, id[0])
                 change_data_query = "UPDATE Customer SET %s = '%s' WHERE id = %s;" % (changed_value, data_to_change, id[0])
                 cur.execute(change_data_query)
                 conn.commit()
@@ -171,35 +141,26 @@ def find_client(name, surname, email):
         conn = psycopg2.connect(database='clients', user=user, password=password)
         print('Соединение с базой открыто(информация о клиенте)')
         with conn.cursor() as cur:
-            get_info = "SELECT id, name, surname, email FROM Customer WHERE name = '%s' and surname = '%s' and email = '%s';" % (name, surname, email)
+            get_info = "SELECT name, surname, email FROM Customer WHERE name = '%s' and surname = '%s' and email = '%s';" % (name, surname, email)
             get_id = "SELECT id FROM Customer WHERE name = '%s' and surname = '%s' and email = '%s';" % (name, surname, email)
             cur.execute(get_info)
-            clients_data = cur.fetchone()
-            print(clients_data)
-            cur.execute(get_id)
-            id = cur.fetchone()
-            if id:
+            data_given = cur.fetchone()
+            if get_id:
+                name_given, surname_given, email_given = [*data_given]
+                cur.execute(get_id)
+                id = cur.fetchone()
                 info_phone_query = "SELECT phone FROM Phone_numbers WHERE customer_id ='%s';" % (id[0])
                 cur.execute(info_phone_query)
-                phone = cur.fetchall()
+                phones = cur.fetchall()
+                phone_given = ','.join([phone[0] for phone in phones]) or 'Нет телефона' #Если нет телефона, то надпись "Нет телефона"
                 conn.commit()
-                print(phone)
-            # else:
-            #     print(f'Пользователя с именем "{name}", фамилией "{surname}", e-mail "{email}" не существует')
+                print(f'Имя: {name_given}, Фамилия:  {surname_given},  E-mail: {email_given},  Телефонные номера: {phone_given}')
+            else:
+                print(f'Пользователя с именем "{name}", фамилией "{surname}", e-mail "{email}" не существует')
     except Exception as e:
         print(f'ERROR: {e}')
     finally:
         conn.close()
+
         print('Соединение с базой закрыто(информация о клиенте)')
 
-
-
-# create_table()
-# add_client('Vasyan', 'Petrov', 'Vavasy3@mail.ru','+791243439')
-# add_client('Petya', 'Petrov', 'Petya@mail.ru','+791243569')
-# add_phone('Vasyan', 'Petrov', 'Vavasy3@mail.ru','+800889--0r0w')
-# add_phone('Vasyan', 'Petrov', 'Vavasy3@mail.ru','+856346354')
-# # update()
-#remove_phone('Vasyan', 'Petrov', 'Vavasy3@mail.ru', '+791243439')
-# remove_client('Vasyan', 'Petrov', 'Vavasy3@mail.ru')
-find_client('Petya', 'Petrov', 'Petya@mail.ru')
