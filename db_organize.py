@@ -142,8 +142,29 @@ def remove_phone(name, surname, email, phone_number):
         conn.close()
         print('Соединение с базой закрыто(удаление телефона)')
 
-def remove_client():
-    pass
+def remove_client(name, surname, email):
+
+    try:
+        conn = psycopg2.connect(database='clients', user=user, password=password)
+        print('Соединение с базой открыто(удаление клиента)')
+        with conn.cursor() as cur:
+            get_id = "SELECT id FROM Customer WHERE name = '%s' and surname = '%s' and email = '%s';" % (name, surname, email)
+            cur.execute(get_id)
+            id = cur.fetchone()
+            if id:
+                remove_client_query = "DELETE from Customer WHERE id = '%s'" % (id[0])
+                remove_phones_query = "DELETE from Phone_numbers WHERE customer_id = '%s'" % (id[0])
+                cur.execute(remove_phones_query)
+                cur.execute(remove_client_query)
+                conn.commit()
+            else:
+                print(f'Пользователя с именем "{name}", фамилией "{surname}", e-mail "{email}" не существует')
+    except Exception as e:
+        print(e)
+    finally:
+        conn.close()
+        print('Соединение с базой закрыто(удаление клиента)')
+
 
 def find_client():
     pass
@@ -151,6 +172,9 @@ def find_client():
 
 # create_table()
 # add_client('Vasyan', 'Petrov', 'Vavasy3@mail.ru','+791243439')
+# add_client('Petya', 'Petrov', 'Petya@mail.ru','+791243569')
 # add_phone('Vasyan', 'Petrov', 'Vavasy3@mail.ru','+800889--0r0w')
-# update()
-remove_phone('Vasyan', 'Petrov', 'Vavasy3@mail.ru', '+791243439')
+# add_phone('Vasyan', 'Petrov', 'Vavasy3@mail.ru','+856346354')
+# # update()
+#remove_phone('Vasyan', 'Petrov', 'Vavasy3@mail.ru', '+791243439')
+remove_client('Vasyan', 'Petrov', 'Vavasy3@mail.ru')
