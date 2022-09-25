@@ -86,10 +86,61 @@ def add_phone(name, surname, email, phone_number):
         print('Соединение с базой закрыто(добавление телефона)')
 
 def update():
-    pass
+    dict_of_data = {'имя': 'name', 'фамилия': 'surname', 'e-mail': 'email'}
+    while True:
+        changed_data = input('Введите какие данные вы хотите изменить среди вариантов: имя, фамилия, e-mail, телефон:\n')
+        if changed_data.lower() not in dict_of_data:
+            print('Выберите среди списка: имя, фамилия, e-mail!')
+        else:
+            print('Ваш выбор изменения:', changed_data.lower())
+            changed_value = dict_of_data[changed_data.lower()]
+            break
+    db_data: list = input('Введите через запятую Фамилию, Имя, e-mail клиента, данные которого хотите изменить: \n').strip().split()
+    name, surname, email = [*db_data]
+    print(db_data)
+    data_to_change = input('Введите новые данные')
+    try:
+        conn = psycopg2.connect(database='clients', user=user, password=password)
+        print('Соединение с базой открыто(изменение данных)')
+        with conn.cursor() as cur:
+            get_id = "SELECT id FROM Customer WHERE name = '%s' and surname = '%s' and email = '%s';" % (name, surname, email)
+            cur.execute(get_id)
+            id = cur.fetchone()
+            if id:
+                print(changed_value, data_to_change, id[0])
+                change_data_query = "UPDATE Customer SET %s = '%s' WHERE id = %s" % (changed_value, data_to_change, id[0])
+                cur.execute(change_data_query)
+                conn.commit()
+            else:
+                print(f'Пользователя с именем "{name}", фамилией "{surname}", e-mail "{email}" не существует')
+    except Exception as e:
+        print(f'ERROR: {e}')
+    finally:
+        conn.close()
+        print('Соединение с базой закрыто(добавление телефона)')
 
-def remove_phone():
-    pass
+
+
+
+def remove_phone(name, surname, email, phone_number):
+    try:
+        conn = psycopg2.connect(database='clients', user=user, password=password)
+        print('Соединение с базой открыто(удаление телефона)')
+        with conn.cursor() as cur:
+            get_id = "SELECT id FROM Customer WHERE name = '%s' and surname = '%s' and email = '%s';" % (name, surname, email)
+            cur.execute(get_id)
+            id = cur.fetchone()
+            if id:
+                delete_phone_query = "DELETE FROM Phone_numbers WHERE phone ='%s'" % (phone_number)
+                cur.execute(delete_phone_query)
+                conn.commit()
+            else:
+                print(f'Пользователя с именем "{name}", фамилией "{surname}", e-mail "{email}" не существует')
+    except Exception as e:
+        print(f'ERROR: {e}')
+    finally:
+        conn.close()
+        print('Соединение с базой закрыто(удаление телефона)')
 
 def remove_client():
     pass
@@ -100,4 +151,6 @@ def find_client():
 
 # create_table()
 # add_client('Vasyan', 'Petrov', 'Vavasy3@mail.ru','+791243439')
-add_phone('Vasyan', 'Petrov', 'Vavasy3@mail.ru','+800889--0r0w')
+# add_phone('Vasyan', 'Petrov', 'Vavasy3@mail.ru','+800889--0r0w')
+# update()
+remove_phone('Vasyan', 'Petrov', 'Vavasy3@mail.ru', '+791243439')
