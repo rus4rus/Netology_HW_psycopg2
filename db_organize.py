@@ -108,7 +108,7 @@ def update():
             id = cur.fetchone()
             if id:
                 print(changed_value, data_to_change, id[0])
-                change_data_query = "UPDATE Customer SET %s = '%s' WHERE id = %s" % (changed_value, data_to_change, id[0])
+                change_data_query = "UPDATE Customer SET %s = '%s' WHERE id = %s;" % (changed_value, data_to_change, id[0])
                 cur.execute(change_data_query)
                 conn.commit()
             else:
@@ -131,7 +131,7 @@ def remove_phone(name, surname, email, phone_number):
             cur.execute(get_id)
             id = cur.fetchone()
             if id:
-                delete_phone_query = "DELETE FROM Phone_numbers WHERE phone ='%s'" % (phone_number)
+                delete_phone_query = "DELETE FROM Phone_numbers WHERE phone ='%s';" % (phone_number)
                 cur.execute(delete_phone_query)
                 conn.commit()
             else:
@@ -152,8 +152,8 @@ def remove_client(name, surname, email):
             cur.execute(get_id)
             id = cur.fetchone()
             if id:
-                remove_client_query = "DELETE from Customer WHERE id = '%s'" % (id[0])
-                remove_phones_query = "DELETE from Phone_numbers WHERE customer_id = '%s'" % (id[0])
+                remove_client_query = "DELETE from Customer WHERE id = '%s';" % (id[0])
+                remove_phones_query = "DELETE from Phone_numbers WHERE customer_id = '%s';" % (id[0])
                 cur.execute(remove_phones_query)
                 cur.execute(remove_client_query)
                 conn.commit()
@@ -166,8 +166,32 @@ def remove_client(name, surname, email):
         print('Соединение с базой закрыто(удаление клиента)')
 
 
-def find_client():
-    pass
+def find_client(name, surname, email):
+    try:
+        conn = psycopg2.connect(database='clients', user=user, password=password)
+        print('Соединение с базой открыто(информация о клиенте)')
+        with conn.cursor() as cur:
+            get_info = "SELECT id, name, surname, email FROM Customer WHERE name = '%s' and surname = '%s' and email = '%s';" % (name, surname, email)
+            get_id = "SELECT id FROM Customer WHERE name = '%s' and surname = '%s' and email = '%s';" % (name, surname, email)
+            cur.execute(get_info)
+            clients_data = cur.fetchone()
+            print(clients_data)
+            cur.execute(get_id)
+            id = cur.fetchone()
+            if id:
+                info_phone_query = "SELECT phone FROM Phone_numbers WHERE customer_id ='%s';" % (id[0])
+                cur.execute(info_phone_query)
+                phone = cur.fetchall()
+                conn.commit()
+                print(phone)
+            # else:
+            #     print(f'Пользователя с именем "{name}", фамилией "{surname}", e-mail "{email}" не существует')
+    except Exception as e:
+        print(f'ERROR: {e}')
+    finally:
+        conn.close()
+        print('Соединение с базой закрыто(информация о клиенте)')
+
 
 
 # create_table()
@@ -177,4 +201,5 @@ def find_client():
 # add_phone('Vasyan', 'Petrov', 'Vavasy3@mail.ru','+856346354')
 # # update()
 #remove_phone('Vasyan', 'Petrov', 'Vavasy3@mail.ru', '+791243439')
-remove_client('Vasyan', 'Petrov', 'Vavasy3@mail.ru')
+# remove_client('Vasyan', 'Petrov', 'Vavasy3@mail.ru')
+find_client('Petya', 'Petrov', 'Petya@mail.ru')
